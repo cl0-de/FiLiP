@@ -10,7 +10,7 @@ LONG_DESCRIPTION = readme_path.read_text()
 INSTALL_REQUIRES = ['aenum',
                     'datamodel_code_generator[http]>=0.11.16',
                     'paho-mqtt>=1.6.1',
-                    'pandas>=1.2',
+                    'pandas>=1.1',
                     'pandas-datapackage-reader>=0.18.0',
                     'pydantic[dotenv]>=1.7.2',
                     'PyYAML',
