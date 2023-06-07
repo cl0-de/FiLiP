@@ -15,12 +15,16 @@ INSTALL_REQUIRES = ['aenum',
                     'pydantic[dotenv]>=1.7.2',
                     'PyYAML',
                     'stringcase>=1.2.0',
-                    'igraph==0.9.8',
                     'rdflib~=6.0.0',
                     'regex',
                     'requests',
                     'rapidfuzz',
                     'wget']
+
+EXTRAS_REQUIRE = {
+    "with_igraph" : ['igraph==0.9.8']
+}
+    
 
 SETUP_REQUIRES = INSTALL_REQUIRES.copy()
 
@@ -62,6 +66,7 @@ setuptools.setup(
     package_data={'filip': ['data/unece-units/*.csv']},
     setup_requires=SETUP_REQUIRES,
     install_requires=INSTALL_REQUIRES,
+    extras_require=EXTRAS_REQUIRE,
     python_requires=">=3.7",
 
 )
