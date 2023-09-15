@@ -8,11 +8,12 @@ readme_path = Path(__file__).parent.joinpath("README.md")
 LONG_DESCRIPTION = readme_path.read_text()
 
 INSTALL_REQUIRES = ['aenum',
+                    'jsonschema==4.17',
                     'datamodel_code_generator[http]>=0.11.16',
                     'paho-mqtt>=1.6.1',
                     'pandas>=1.1',
                     'pandas-datapackage-reader>=0.18.0',
-                    'pydantic[dotenv]>=1.7.2',
+                    'pydantic[dotenv]~=1.10.2',
                     'PyYAML',
                     'stringcase>=1.2.0',
                     'rdflib~=6.0.0',
