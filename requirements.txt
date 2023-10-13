@@ -15,7 +15,7 @@ rdflib~=6.0.0
 python-dateutil>=2.8.2
 wget >=3.2
 stringcase>=1.2.0
-igraph==0.9.8
+igraph>=0.9.8
 paho-mqtt>=1.6.1
 datamodel_code_generator[http]>=0.11.16
 jsonschema==4.17

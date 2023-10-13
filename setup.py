@@ -23,7 +23,7 @@ INSTALL_REQUIRES = ['aenum',
                     'wget']
 
 EXTRAS_REQUIRE = {
-    "with_igraph" : ['igraph==0.9.8']
+    "with_igraph" : ['igraph>=0.9.8']
 }
     
 
