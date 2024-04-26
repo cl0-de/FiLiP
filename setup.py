@@ -22,6 +22,11 @@ INSTALL_REQUIRES = ['aenum~=3.1.15',
                     'wget~=3.2',
                     'pyjexl~=0.3.0']
 
+EXTRAS_REQUIRE = {
+    "with_igraph" : ['igraph==0.9.8']
+}
+    
+
 SETUP_REQUIRES = INSTALL_REQUIRES.copy()
 
 VERSION = '0.4.1'
