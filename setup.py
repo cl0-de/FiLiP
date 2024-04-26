@@ -23,7 +23,7 @@ INSTALL_REQUIRES = ['aenum~=3.1.15',
                     'pyjexl~=0.3.0']
 
 EXTRAS_REQUIRE = {
-    "with_igraph" : ['igraph==0.9.8']
+    "with_igraph" : ['igraph>=0.9.8']
 }
     
 
