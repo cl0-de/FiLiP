@@ -1,6 +1,7 @@
 """
 Functions to clean up a tenant within a fiware based platform.
 """
+import warnings
 from functools import wraps
 
 from pydantic import AnyHttpUrl, AnyUrl
@@ -13,9 +14,11 @@ from filip.clients.ngsi_v2 import \
     QuantumLeapClient
 
 
-def clear_context_broker(url: str = None,
-                         fiware_header: FiwareHeader = None,
-                         cb_client: ContextBrokerClient = None):
+def clear_context_broker(url: str,
+                         fiware_header: FiwareHeader,
+                         clear_registrations: bool = False,
+                         cb_client: ContextBrokerClient = None
+                         ):
     """
     Function deletes all entities, registrations and subscriptions for a
     given fiware header. To use TLS connection you need to provide the cb_client parameter
@@ -28,8 +31,12 @@ def clear_context_broker(url: str = None,
     Args:
         url: Url of the context broker service
         fiware_header: header of the tenant
-        cb_client: enables TLS communication if created with Session object, only needed for self-signed certificates
-
+        cb_client: enables TLS communication if created with Session object, only needed
+                    for self-signed certificates
+        clear_registrations: Determines whether registrations should be deleted.
+                             If registrations are deleted while devices with commands
+                             still exist, these devices become unreachable.
+                             Only set to true once such devices are cleared.
     Returns:
         None
     """
@@ -49,9 +56,10 @@ def clear_context_broker(url: str = None,
     assert len(client.get_subscription_list()) == 0
 
     # clear registrations
-    for reg in client.get_registration_list():
-        client.delete_registration(registration_id=reg.id)
-    assert len(client.get_registration_list()) == 0
+    if clear_registrations:
+        for reg in client.get_registration_list():
+            client.delete_registration(registration_id=reg.id)
+        assert len(client.get_registration_list()) == 0
 
 
 def clear_iot_agent(url: Union[str, AnyHttpUrl] = None,
@@ -63,7 +71,7 @@ def clear_iot_agent(url: Union[str, AnyHttpUrl] = None,
     as an argument with the Session object including the certificate and private key.
 
     Args:
-        url: Url of the context broker service
+        url: Url of the iot agent service
         fiware_header: header of the tenant
         iota_client: enables TLS communication if created with Session object, only needed for self-signed certificates
 
@@ -164,10 +172,17 @@ def clear_all(*,
         None
     """
     if iota_url is not None or iota_client is not None:
-        if isinstance(iota_url, (str, AnyUrl)):
-            iota_url = [iota_url]
-        for url in iota_url:
-            clear_iot_agent(url=url, fiware_header=fiware_header, iota_client=iota_client)
+        if iota_url is None:
+            # loop client
+            if isinstance(iota_client, IoTAClient):
+                iota_client = [iota_client]
+            for client in iota_client:
+                clear_iot_agent(fiware_header=fiware_header, iota_client=client)
+        else:
+            if isinstance(iota_url, (str, AnyUrl)):
+                iota_url = [iota_url]
+            for url in iota_url:
+                clear_iot_agent(url=url, fiware_header=fiware_header)
 
     if cb_url is not None or cb_client is not None:
         clear_context_broker(url=cb_url, fiware_header=fiware_header, cb_client=cb_client)

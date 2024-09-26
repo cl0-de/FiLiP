@@ -7,6 +7,7 @@
 # In short: this workflow shows you a way to keep use case model simple and
 # reusable while ensuring the compatability with FIWARE NGSI-V2 standards
 """
+from typing import Optional
 from pydantic import ConfigDict, BaseModel
 from pydantic.fields import Field, FieldInfo
 from filip.models import FiwareHeader
@@ -14,9 +15,9 @@ from filip.models.ngsi_v2.context import ContextEntityKeyValues
 from filip.clients.ngsi_v2.cb import ContextBrokerClient
 from filip.utils.cleanup import clear_context_broker
 from pprint import pprint
-
+from filip.config import settings
 # Host address of Context Broker
-CB_URL = "http://localhost:1026"
+CB_URL = settings.CB_URL
 
 # You can here also change the used Fiware service
 # FIWARE-Service
@@ -43,11 +44,11 @@ class PostalAddress(BaseModel):
         alias="streetAddress",
         description="The street address. For example, 1600 Amphitheatre Pkwy.",
     )
-    address_region: str = Field(
+    address_region: Optional[str] = Field(
         alias="addressRegion",
         default=None,
     )
-    address_locality: str = Field(
+    address_locality: Optional[str] = Field(
         alias="addressLocality",
         default=None,
         description="The locality in which the street address is, and which is "
@@ -107,7 +108,7 @@ if __name__ == "__main__":
     cb_client = ContextBrokerClient(url=CB_URL,
                                     fiware_header=fiware_header)
     # clear cb
-    clear_context_broker(cb_client=cb_client)
+    clear_context_broker(cb_client=cb_client, fiware_header=fiware_header, url=CB_URL)
 
     # 1. Crate data
     weather_station = WeatherStationFIWARE(
@@ -125,7 +126,7 @@ if __name__ == "__main__":
 
     # 2. Update data
     weather_station.temperature = 30  # represent use case algorithm
-    cb_client.update_entity_key_values(entity=weather_station)
+    cb_client.update_entity(entity=weather_station, key_values=True)
 
     # 3. Query and validate data
     # represent querying data by data users
@@ -153,4 +154,4 @@ if __name__ == "__main__":
           f"{weather_station_2_fiware.model_dump_json(indent=2, include={'id', 'type'})}\n")
 
     # clear cb
-    clear_context_broker(cb_client=cb_client)
+    clear_context_broker(cb_client=cb_client, fiware_header=fiware_header, url=CB_URL)

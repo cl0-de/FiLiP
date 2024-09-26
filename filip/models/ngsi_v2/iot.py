@@ -14,9 +14,10 @@ from filip.models.ngsi_v2.base import \
     BaseAttribute, \
     BaseValueAttribute, \
     BaseNameAttribute
-from filip.utils.validators import (validate_fiware_datatype_string_protect, validate_fiware_datatype_standard,
-                                    validate_jexl_expression, validate_device_expression_language,
-                                    validate_service_group_expression_language)
+from filip.utils.validators import (validate_fiware_datatype_string_protect,
+                                    validate_fiware_datatype_standard,
+                                    validate_jexl_expression,
+                                    validate_expression_language)
 
 logger = logging.getLogger()
 
@@ -221,7 +222,7 @@ class ServiceGroup(BaseModel):
         Returns:
             timezone
         """
-        return str(value)
+        return str(value) if value else value
     lazy: Optional[List[LazyDeviceAttribute]] = Field(
         default=[],
         desription="list of common lazy attributes of the device. For each "
@@ -250,13 +251,13 @@ class ServiceGroup(BaseModel):
                     "IoT Agents to store information along with the devices "
                     "in the Device Registry."
     )
-    expressionLanguage: ExpressionLanguage = Field(
+    expressionLanguage: Optional[ExpressionLanguage] = Field(
         default=ExpressionLanguage.JEXL,
         description="optional boolean value, to set expression language used "
                     "to compute expressions, possible values are: "
-                    "legacy or jexl, but legacy is deprecated."
+                    "legacy or jexl, but legacy is deprecated. If it is set None, jexl is used."
     )
-    valid_expressionLanguage = field_validator("expressionLanguage")(validate_service_group_expression_language)
+    valid_expressionLanguage = field_validator("expressionLanguage")(validate_expression_language)
     explicitAttrs: Optional[bool] = Field(
         default=False,
         description="optional boolean value, to support selective ignore "
@@ -321,13 +322,13 @@ class DeviceSettings(BaseModel):
         description="Name of the device transport protocol, for the IoT Agents "
                     "with multiple transport protocols."
     )
-    expressionLanguage: ExpressionLanguage = Field(
+    expressionLanguage: Optional[ExpressionLanguage] = Field(
         default=ExpressionLanguage.JEXL,
         description="optional boolean value, to set expression language used "
                     "to compute expressions, possible values are: "
-                    "legacy or jexl, but legacy is deprecated."
+                    "legacy or jexl, but legacy is deprecated. If it is set None, jexl is used."
     )
-    valid_expressionLanguage = field_validator("expressionLanguage")(validate_device_expression_language)
+    valid_expressionLanguage = field_validator("expressionLanguage")(validate_expression_language)
     explicitAttrs: Optional[bool] = Field(
         default=False,
         description="optional boolean value, to support selective ignore "
@@ -438,6 +439,46 @@ class Device(DeviceSettings):
 
         return self
 
+    @model_validator(mode='after')
+    def validate_duplicated_device_attributes(self):
+        """
+        Check whether device has identical attributes
+        Args:
+            self: dict of Device instance.
+
+        Returns:
+            The dict of Device instance after validation.
+        """
+        for i, attr in enumerate(self.attributes):
+            for other_attr in self.attributes[:i] + self.attributes[i + 1:]:
+                if attr.model_dump() == other_attr.model_dump():
+                    raise ValueError(f"Duplicated attributes found: {attr.name}")
+        return self
+
+    @model_validator(mode='after')
+    def validate_device_attributes_name_object_id(self):
+        """
+        Validate the device regarding the behavior with devices attributes.
+        According to https://iotagent-node-lib.readthedocs.io/en/latest/api.html and
+        based on our best practice, following rules are checked
+            - name is required, but not necessarily unique
+            - object_id is not required, if given must be unique, i.e. not equal to any
+                existing object_id and name
+        Args:
+            self: dict of Device instance.
+
+        Returns:
+            The dict of Device instance after validation.
+        """
+        for i, attr in enumerate(self.attributes):
+            for other_attr in self.attributes[:i] + self.attributes[i + 1:]:
+                if attr.object_id and other_attr.object_id and \
+                        attr.object_id == other_attr.object_id:
+                    raise ValueError(f"object_id {attr.object_id} is not unique")
+                if attr.object_id and attr.object_id == other_attr.name:
+                    raise ValueError(f"object_id {attr.object_id} is not unique")
+        return self
+
     def get_attribute(self, attribute_name: str) -> Union[DeviceAttribute,
                                                           LazyDeviceAttribute,
                                                           StaticDeviceAttribute,
@@ -479,7 +520,8 @@ class Device(DeviceSettings):
         """
         try:
             if type(attribute) == DeviceAttribute:
-                if attribute in self.attributes:
+                if attribute.model_dump(exclude_none=True) in \
+                        [attr.model_dump(exclude_none=True) for attr in self.attributes]:
                     raise ValueError
 
                 self.attributes.append(attribute)

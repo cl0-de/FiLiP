@@ -7,11 +7,11 @@ Configuration or Device provisioning APIs.
 
 # The IoTAgent Library provides an expression language for measurement transformation,
 that can be used to adapt the # information coming from the South Bound APIs to the
-information reported to the Context Broker. This is really useful # when you need to
+information reported to the Context Broker. This is really useful when you need to
 adapt measure.
 
 # There are available two different expression languages jexl and legacy. The
-recommended language to use is jexl, # which is newer and most powerful.
+recommended language to use is jexl, which is newer and most powerful.
 
 # The input sections are marked with 'TODO'
 
@@ -33,6 +33,7 @@ from filip.models.ngsi_v2.iot import (Device, ServiceGroup, TransportProtocol,
                                       ExpressionLanguage)
 from filip.utils.cleanup import clear_all
 from paho.mqtt import client as mqtt_client
+from paho.mqtt.client import CallbackAPIVersion
 
 # Host address of Context Broker
 CB_URL = "http://localhost:1026"
@@ -103,7 +104,7 @@ if __name__ == '__main__':
                      )
     iota_client.post_device(device=device2)
 
-    client = mqtt_client.Client()
+    client = mqtt_client.Client(callback_api_version=CallbackAPIVersion.VERSION2)
     client.username_pw_set(username="", password="")
     client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT)
     client.loop_start()
@@ -115,6 +116,8 @@ if __name__ == '__main__':
     client.publish(...)
 
     client.disconnect()
+
+    time.sleep(2)
 
     # Printing context entities of OCB
     for context_entity in cb_client.get_entity_list(entity_types=["WasteContainer"]):
@@ -145,7 +148,7 @@ if __name__ == '__main__':
                      )
     iota_client.post_device(device=device3)
 
-    client = mqtt_client.Client()
+    client = mqtt_client.Client(callback_api_version=CallbackAPIVersion.VERSION2)
     client.username_pw_set(username="", password="")
     client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT)
     client.loop_start()
